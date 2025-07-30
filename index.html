@@ -1,102 +1,121 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>FeedPaws Login</title>
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background-color: #f0f0f0;
-      }
-      input, button {
-        margin: 10px 0;
-        padding: 10px;
-        width: 100%;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-      }
-      #admin-panel {
-        margin-top: 20px;
-        display: none;
-        padding: 15px;
-        background: #fff3cd;
-        border: 1px solid #ffeeba;
-        border-radius: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>🐾 FeedPaws Volunteer Login</h2>
-    <input type="tel" id="phoneNumber" placeholder="Enter phone (+91...)" />
+<head>
+  <title>FeedPaws Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
+    #login-form, #otp-form, #admin-panel, #volunteer-panel { display: none; margin-top: 20px; }
+    input { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; }
+    #message { color: green; }
+  </style>
+</head>
+<body>
+
+  <h2>FeedPaws Login</h2>
+
+  <div id="login-form">
+    <input type="text" id="phone-number" placeholder="+91xxxxxxxxxx">
     <div id="recaptcha-container"></div>
     <button onclick="sendOTP()">Send OTP</button>
+  </div>
 
-    <input type="text" id="otp" placeholder="Enter OTP" />
-    <input type="password" id="adminCode" placeholder="Admin Secret Code (optional)" />
-    <button onclick="verifyOTP()">Login</button>
+  <div id="otp-form">
+    <input type="text" id="otp-code" placeholder="Enter OTP">
+    <input type="password" id="admin-code" placeholder="Enter admin code (optional)">
+    <button onclick="verifyOTP()">Verify OTP</button>
+  </div>
 
-    <div id="admin-panel">
-      <h3>✅ Admin Access Granted</h3>
-      <p>Welcome to the admin panel.</p>
-    </div>
+  <div id="volunteer-panel">
+    <h3>✅ Logged in as Volunteer</h3>
+  </div>
 
-    <script>
-      // Your Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyBV85q58uQZ2u1QHe3hsEa_vHedi0n6KwE",
-        authDomain: "feedpaws-c729b.firebaseapp.com",
-        projectId: "feedpaws-c729b",
-        storageBucket: "feedpaws-c729b.appspot.com",
-        messagingSenderId: "905040374513",
-        appId: "1:905040374513:web:5667a5784041d3843b1750",
-        measurementId: "G-8ZQCFW1MND"
-      };
+  <div id="admin-panel">
+    <h3>👑 Admin Panel Unlocked</h3>
+    <!-- Add more functionality here -->
+    <p>Manage feeding reports, approve funds, send notifications, etc.</p>
+  </div>
 
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
+  <p id="message"></p>
 
-      // Setup invisible Recaptcha
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBV85q58uQZ2u1QHe3hsEa_vHedi0n6KwE",
+      authDomain: "feedpaws-c729b.firebaseapp.com",
+      projectId: "feedpaws-c729b",
+      storageBucket: "feedpaws-c729b.appspot.com",
+      messagingSenderId: "905040374513",
+      appId: "1:905040374513:web:5667a5784041d3843b1750",
+      measurementId: "G-8ZQCFW1MND"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    window.onload = function () {
+      document.getElementById('login-form').style.display = 'block';
+
+      // Setup invisible reCAPTCHA
       window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-        size: 'invisible',
-        callback: function(response) {
-          // CAPTCHA solved
-        }
+        'size': 'invisible',
+        'callback': response => sendOTP()
       });
+      recaptchaVerifier.render().then(widgetId => {
+        window.recaptchaWidgetId = widgetId;
+      });
+    };
 
-      function sendOTP() {
-        const phoneNumber = document.getElementById("phoneNumber").value;
-        const appVerifier = window.recaptchaVerifier;
-
-        auth.signInWithPhoneNumber(phoneNumber, appVerifier)
-          .then((confirmationResult) => {
-            window.confirmationResult = confirmationResult;
-            alert("OTP sent!");
-          }).catch((error) => {
-            alert("Error: " + error.message);
-          });
+    function sendOTP() {
+      const phoneNumber = document.getElementById('phone-number').value;
+      if (!phoneNumber.startsWith("+")) {
+        document.getElementById('message').textContent = "Please enter phone number in international format (e.g., +91xxxx)";
+        return;
       }
 
-      function verifyOTP() {
-        const otp = document.getElementById("otp").value;
-        const adminCode = document.getElementById("adminCode").value;
-
-        window.confirmationResult.confirm(otp).then((result) => {
-          alert("Login successful!");
-
-          // Check admin code
-          if (adminCode === "feedadmin123") {
-            document.getElementById("admin-panel").style.display = "block";
-          } else {
-            alert("Logged in as volunteer.");
-          }
-        }).catch((error) => {
-          alert("OTP verification failed: " + error.message);
+      auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+        .then(result => {
+          window.confirmationResult = result;
+          document.getElementById('login-form').style.display = 'none';
+          document.getElementById('otp-form').style.display = 'block';
+          document.getElementById('message').textContent = "OTP sent. Please enter it below.";
+        })
+        .catch(error => {
+          document.getElementById('message').textContent = "Error sending OTP: " + error.message;
         });
+    }
+
+    function verifyOTP() {
+      const code = document.getElementById('otp-code').value;
+      const adminCode = document.getElementById('admin-code').value;
+
+      if (!code) {
+        document.getElementById('message').textContent = "Please enter OTP.";
+        return;
       }
-    </script>
-  </body>
+
+      window.confirmationResult.confirm(code)
+        .then(result => {
+          document.getElementById('otp-form').style.display = 'none';
+
+          if (adminCode === "feedadmin123") {
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('message').textContent = "Admin logged in!";
+          } else {
+            document.getElementById('volunteer-panel').style.display = 'block';
+            document.getElementById('message').textContent = "Volunteer logged in!";
+          }
+        })
+        .catch(error => {
+          document.getElementById('message').textContent = "Invalid OTP. " + error.message;
+        });
+    }
+  </script>
+</body>
 </html>
