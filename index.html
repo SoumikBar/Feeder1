@@ -1,49 +1,51 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>FeedPaws Volunteer Login</title>
+    <meta charset="UTF-8" />
+    <title>FeedPaws Login</title>
     <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
     <style>
       body {
-        font-family: sans-serif;
+        font-family: Arial, sans-serif;
         padding: 20px;
-        background: #f2f2f2;
+        background-color: #f0f0f0;
       }
       input, button {
-        display: block;
         margin: 10px 0;
         padding: 10px;
-        font-size: 16px;
         width: 100%;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
       }
-      #admin-section {
-        display: none;
+      #admin-panel {
         margin-top: 20px;
-        padding: 10px;
-        border: 2px dashed #888;
-        background: #fffbe6;
+        display: none;
+        padding: 15px;
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 5px;
       }
     </style>
   </head>
   <body>
     <h2>🐾 FeedPaws Volunteer Login</h2>
-
-    <input type="tel" id="phoneNumber" placeholder="+91..." />
+    <input type="tel" id="phoneNumber" placeholder="Enter phone (+91...)" />
     <div id="recaptcha-container"></div>
     <button onclick="sendOTP()">Send OTP</button>
 
     <input type="text" id="otp" placeholder="Enter OTP" />
-    <button onclick="verifyOTP()">Verify OTP</button>
+    <input type="password" id="adminCode" placeholder="Admin Secret Code (optional)" />
+    <button onclick="verifyOTP()">Login</button>
 
-    <input type="password" id="secretCode" placeholder="Enter Admin Secret Code (optional)" />
-
-    <div id="admin-section">
-      <h3>🔐 Admin Panel</h3>
-      <p>Welcome Admin! You now have access to admin-only features.</p>
+    <div id="admin-panel">
+      <h3>✅ Admin Access Granted</h3>
+      <p>Welcome to the admin panel.</p>
     </div>
 
     <script>
+      // Your Firebase config
       const firebaseConfig = {
         apiKey: "AIzaSyBV85q58uQZ2u1QHe3hsEa_vHedi0n6KwE",
         authDomain: "feedpaws-c729b.firebaseapp.com",
@@ -57,10 +59,11 @@
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
 
+      // Setup invisible Recaptcha
       window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-        'size': 'normal',
-        'callback': function(response) {
-          console.log("Recaptcha verified");
+        size: 'invisible',
+        callback: function(response) {
+          // CAPTCHA solved
         }
       });
 
@@ -73,24 +76,25 @@
             window.confirmationResult = confirmationResult;
             alert("OTP sent!");
           }).catch((error) => {
-            alert("Error sending OTP: " + error.message);
+            alert("Error: " + error.message);
           });
       }
 
       function verifyOTP() {
         const otp = document.getElementById("otp").value;
-        const secretCode = document.getElementById("secretCode").value;
+        const adminCode = document.getElementById("adminCode").value;
 
         window.confirmationResult.confirm(otp).then((result) => {
           alert("Login successful!");
 
-          if (secretCode === "feedadmin123") {
-            document.getElementById("admin-section").style.display = "block";
+          // Check admin code
+          if (adminCode === "feedadmin123") {
+            document.getElementById("admin-panel").style.display = "block";
           } else {
-            alert("You’re logged in as Volunteer.");
+            alert("Logged in as volunteer.");
           }
         }).catch((error) => {
-          alert("Invalid OTP!");
+          alert("OTP verification failed: " + error.message);
         });
       }
     </script>
